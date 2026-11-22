@@ -11,7 +11,6 @@ import type { Registration } from '../types/auth'
 import type { ClubEvent } from '../types/event'
 import { getErrorMessage } from '../utils/apiError'
 import { POINTS_PER_EVENT } from '../data/drlCriteria'
-import { getDrlItemId } from '../utils/drl'
 import { getToday } from '../utils/date'
 import { buttonClasses } from '../utils/ui'
 import Button from './Button'
@@ -159,7 +158,7 @@ export default function EventRegistrationSection({ event }: { event: ClubEvent }
                       <td className="px-3 py-2 font-medium text-slate-900">{item.fullName}</td>
                       <td className="px-3 py-2 text-slate-600">{item.studentId}</td>
                       <td className="px-3 py-2 text-slate-600">{item.email}</td>
-                      <td className="px-3 py-2 text-slate-600">{isPast ? `+${POINTS_PER_EVENT} (mục ${getDrlItemId(event)})` : '—'}</td>
+                      <td className="px-3 py-2 text-slate-600">{isPast ? `+${POINTS_PER_EVENT}` : '—'}</td>
                       <td className="px-3 py-2 text-slate-600">
                         {new Date(item.createdAt).toLocaleString('vi-VN')}
                       </td>

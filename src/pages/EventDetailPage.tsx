@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { getClub } from '../data/clubs'
-import { DRL_EVENT_ITEMS, POINTS_PER_EVENT } from '../data/drlCriteria'
+import { POINTS_PER_EVENT } from '../data/drlCriteria'
 import ClubBadge from '../components/ClubBadge'
 import ConfirmDialog from '../components/ConfirmDialog'
 import ErrorMessage from '../components/ErrorMessage'
@@ -103,8 +103,7 @@ export default function EventDetailPage() {
           )}
           <InfoRow label="Số chỗ tối đa">{event.maxSeats}</InfoRow>
           <InfoRow label="Điểm rèn luyện">
-            +{POINTS_PER_EVENT} điểm ·{' '}
-            {DRL_EVENT_ITEMS.find((item) => item.id === getDrlItemId(event))?.label}
+            +{POINTS_PER_EVENT} điểm (mục {getDrlItemId(event)})
           </InfoRow>
         </dl>
 

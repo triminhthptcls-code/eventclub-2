@@ -1,4 +1,4 @@
-import type { DrlEventItemId, DrlGroup, DrlItem, DrlSource } from '../types/drl'
+import type { DrlEventItemId, DrlGroup, DrlItem } from '../types/drl'
 
 /** Mỗi sự kiện đã tham dự được cộng bấy nhiêu điểm vào mục của sự kiện */
 export const POINTS_PER_EVENT = 2
@@ -28,7 +28,7 @@ export const DRL_GROUPS: DrlGroup[] = [
 
 /**
  * Các mục nhỏ của bảng điểm:
- * - base: sinh viên ngoan, học giỏi thì mặc định đủ điểm (tổng 55 điểm)
+ * - base: tính đủ điểm khi sinh viên chấp hành nội quy, học tập tốt (tổng 55 điểm)
  * - event: cộng từ sự kiện CLB đã tham dự (2 điểm/lần, tối đa theo mục)
  * - manual: do Nhà trường, Đoàn, Hội chấm nên web không tính
  */
@@ -47,7 +47,13 @@ export const DRL_ITEMS: DrlItem[] = [
     max: 2,
     source: 'manual',
   },
-  { id: '1.3', group: 1, title: 'Kết quả học tập trong học kỳ', max: 10, source: 'base' },
+  {
+    id: '1.3',
+    group: 1,
+    title: 'Kết quả học tập trong học kỳ',
+    max: 10,
+    source: 'base',
+  },
   {
     id: '2.1',
     group: 2,
@@ -117,31 +123,19 @@ export const DRL_ITEMS: DrlItem[] = [
 export const DRL_EVENT_ITEMS: { id: DrlEventItemId; label: string; hint: string }[] = [
   {
     id: '3.1',
-    label: 'Mục 3.1 · Hoạt động của CLB, Đoàn, Hội',
+    label: '3.1 - Hoạt động CLB, Đoàn, Hội',
     hint: 'Hoạt động phong trào, văn hóa, văn nghệ, thể thao (tối đa 10 điểm).',
   },
   {
     id: '1.1',
-    label: 'Mục 1.1 · Học thuật, NCKH',
+    label: '1.1 - Học thuật, NCKH',
     hint: 'Hội thảo, cuộc thi học thuật, hoạt động chuyên môn (tối đa 10 điểm).',
   },
   {
     id: '3.2',
-    label: 'Mục 3.2 · Tình nguyện, công ích',
+    label: '3.2 - Tình nguyện, công ích',
     hint: 'Hoạt động công ích, tình nguyện, công tác xã hội (tối đa 5 điểm).',
   },
 ]
 
 export const DRL_EVENT_ITEM_IDS: DrlEventItemId[] = DRL_EVENT_ITEMS.map((item) => item.id)
-
-/** Tổng điểm mặc định của sinh viên chấp hành đầy đủ và học tập tốt */
-export const BASE_POINTS = DRL_ITEMS.filter((item) => item.source === 'base').reduce(
-  (sum, item) => sum + item.max,
-  0,
-)
-
-export const DRL_SOURCE_LABELS: Record<DrlSource, string> = {
-  base: 'Mặc định',
-  event: 'Từ sự kiện CLB',
-  manual: 'Do Trường, Đoàn, Hội chấm',
-}
