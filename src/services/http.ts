@@ -1,12 +1,6 @@
 import seed from '../../server/db.json'
 import { NotFoundError } from '../utils/apiError'
 
-/**
- * "Máy chủ" giả chạy hoàn toàn trong trình duyệt: dữ liệu lưu ở localStorage, lần đầu
- * được nạp từ server/db.json. Giữ cùng cách gọi như axios (get/post/put/delete trả về
- * { data }) để các service không phải đổi, và web chạy được trên GitHub Pages
- * (không cần json-server). Dữ liệu chỉ nằm trên trình duyệt của từng người dùng.
- */
 
 type Row = { id: string } & Record<string, unknown>
 type Tables = Record<string, Row[]>
@@ -30,7 +24,7 @@ function load(): Tables {
       return cache
     }
   } catch {
-    // localStorage bị chặn hoặc dữ liệu hỏng: dùng lại dữ liệu mẫu
+
   }
   cache = structuredClone(seed) as unknown as Tables
   persist()

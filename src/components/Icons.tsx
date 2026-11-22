@@ -1,6 +1,4 @@
 import type { ReactNode, SVGProps } from 'react'
-
-/** Bộ icon SVG nhúng sẵn (nét 2px, kiểu outline) - không cần cài thêm thư viện */
 function Base({ children, ...props }: SVGProps<SVGSVGElement> & { children: ReactNode }) {
   return (
     <svg
