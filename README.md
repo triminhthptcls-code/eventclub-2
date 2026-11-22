@@ -1,4 +1,4 @@
-# FTU Club Events
+# FTU Club Events https://triminhthptcls-code.github.io/eventclub-2/#/su-kien
 
 Web quản lý sự kiện câu lạc bộ của Trường Đại học Ngoại thương: sinh viên xem và đăng ký sự kiện, tham gia CLB, theo dõi điểm rèn luyện; các CLB (và Nhà trường) đăng và quản lý sự kiện của mình.
 
@@ -78,7 +78,7 @@ server/db.json  dữ liệu mẫu (34 sự kiện, 33 CLB cùng Nhà trường, 
 | --- | --- | --- |
 | ![Danh sách](screenshots/list.png) | ![Hoạt động](screenshots/activity.png) | ![Mobile](screenshots/mobile.png) |
 
-## Video giới thiệu
+## Video giới thiệu https://triminhthptcls-code.github.io/eventclub-2/#/su-kien
 
 > TODO: quay video 3 đến 5 phút, đưa lên Google Drive, mở quyền xem và dán đường dẫn vào đây.
 
