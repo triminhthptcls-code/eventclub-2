@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import type { EventFormValues, EventPayload } from '../types/event'
 import { CLUBS, CLUB_GROUPS } from '../data/clubs'
+import { DRL_EVENT_ITEMS, POINTS_PER_EVENT } from '../data/drlCriteria'
 import { MODE_OPTIONS } from '../utils/constants'
 import { toPayload } from '../utils/eventForm'
 import { NAME_MAX, SEATS_MAX, SEATS_MIN, validateEvent } from '../utils/validateEvent'
@@ -25,13 +26,14 @@ interface EventFormProps {
   onCancel: () => void
 }
 
-type TextFieldName = Exclude<keyof EventFormValues, 'mode' | 'club'>
+type TextFieldName = Exclude<keyof EventFormValues, 'mode' | 'club' | 'drlItem'>
 type TouchedMap = Partial<Record<keyof EventFormValues, boolean>>
 
 /** Thứ tự các ô trên form, dùng để đưa con trỏ về ô lỗi đầu tiên khi gửi */
 const FIELD_ORDER: (keyof EventFormValues)[] = [
   'name',
   'club',
+  'drlItem',
   'date',
   'startTime',
   'endTime',
@@ -137,6 +139,26 @@ export default function EventForm({
         {visibleError('club') && (
           <p role="alert" className="mt-1 text-sm text-rose-600">
             {visibleError('club')}
+          </p>
+        )}
+      </div>
+
+      <div>
+        <RadioGroup
+          legend="Mục điểm rèn luyện"
+          name="drlItem"
+          value={values.drlItem}
+          options={DRL_EVENT_ITEMS.map((item) => ({ value: item.id, label: item.label }))}
+          disabled={submitting}
+          onChange={(drlItem) => setValues((current) => ({ ...current, drlItem }))}
+        />
+        <p className="mt-1 text-xs text-slate-500">
+          Sinh viên đã tham dự được +{POINTS_PER_EVENT} điểm vào mục này.{' '}
+          {DRL_EVENT_ITEMS.find((item) => item.id === values.drlItem)?.hint}
+        </p>
+        {visibleError('drlItem') && (
+          <p role="alert" className="mt-1 text-sm text-rose-600">
+            {visibleError('drlItem')}
           </p>
         )}
       </div>

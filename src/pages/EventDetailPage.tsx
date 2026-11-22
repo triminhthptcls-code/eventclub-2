@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { getClub } from '../data/clubs'
+import { DRL_EVENT_ITEMS, POINTS_PER_EVENT } from '../data/drlCriteria'
 import ClubBadge from '../components/ClubBadge'
 import ConfirmDialog from '../components/ConfirmDialog'
 import ErrorMessage from '../components/ErrorMessage'
@@ -14,6 +15,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useDeleteEvent } from '../hooks/useDeleteEvent'
 import { useEvent } from '../hooks/useEvent'
 import { formatDate, getToday } from '../utils/date'
+import { getDrlItemId } from '../utils/drl'
 import { buttonClasses } from '../utils/ui'
 
 interface InfoRowProps {
@@ -100,6 +102,10 @@ export default function EventDetailPage() {
             </InfoRow>
           )}
           <InfoRow label="Số chỗ tối đa">{event.maxSeats}</InfoRow>
+          <InfoRow label="Điểm rèn luyện">
+            +{POINTS_PER_EVENT} điểm ·{' '}
+            {DRL_EVENT_ITEMS.find((item) => item.id === getDrlItemId(event))?.label}
+          </InfoRow>
         </dl>
 
         <EventRegistrationSection event={event} />

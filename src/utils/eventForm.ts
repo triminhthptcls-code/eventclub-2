@@ -1,3 +1,4 @@
+import { DEFAULT_DRL_ITEM } from '../data/drlCriteria'
 import type {
   ClubEvent,
   EventFormValues,
@@ -15,6 +16,7 @@ export const EMPTY_FORM_VALUES: EventFormValues = {
   link: '',
   maxSeats: '',
   image: '',
+  drlItem: DEFAULT_DRL_ITEM,
 }
 
 /** Sự kiện lấy từ API -> giá trị ban đầu của form chỉnh sửa */
@@ -30,6 +32,7 @@ export function toFormValues(event: ClubEvent): EventFormValues {
     link: event.link,
     maxSeats: String(event.maxSeats),
     image: event.image ?? '',
+    drlItem: event.drlItem ?? DEFAULT_DRL_ITEM,
   }
 }
 
@@ -46,5 +49,6 @@ export function toPayload(values: EventFormValues): EventPayload {
     link: values.mode === 'online' ? values.link.trim() : '',
     maxSeats: Number(values.maxSeats),
     image: values.image.trim() || undefined,
+    drlItem: values.drlItem,
   }
 }

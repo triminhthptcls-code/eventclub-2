@@ -1,5 +1,6 @@
 import type { EventFormErrors, EventFormValues } from '../types/event'
 import { getClub } from '../data/clubs'
+import { DRL_EVENT_ITEM_IDS } from '../data/drlCriteria'
 import { getToday } from './date'
 import { IMAGE_MAX_CHARS } from './image'
 
@@ -49,6 +50,11 @@ export function validateEvent(
     errors.club = 'Vui lòng chọn câu lạc bộ tổ chức.'
   } else if (!getClub(values.club)) {
     errors.club = 'Câu lạc bộ không hợp lệ.'
+  }
+
+  // Mục điểm rèn luyện: bắt buộc, phải là một trong các mục sự kiện CLB được tính
+  if (!DRL_EVENT_ITEM_IDS.includes(values.drlItem)) {
+    errors.drlItem = 'Vui lòng chọn mục điểm rèn luyện.'
   }
 
   // Ngày tổ chức: bắt buộc; khi thêm mới không được ở quá khứ

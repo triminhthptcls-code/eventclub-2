@@ -9,7 +9,7 @@ import { SCHOOL_ID, getClub } from '../data/clubs'
 import { useAuth } from '../hooks/useAuth'
 import { getEventsByClub } from '../services/eventService'
 import { getMembershipsByClub } from '../services/membershipService'
-import { getAttendedCounts, toPoints } from '../services/pointsService'
+import { getEventPointsByUser } from '../services/pointsService'
 import type { Membership } from '../types/auth'
 import type { EventWithSeats } from '../types/event'
 import { getErrorMessage } from '../utils/apiError'
@@ -38,7 +38,7 @@ export default function ManagePage() {
 
   useEffect(() => {
     let ignore = false
-    Promise.all([getEventsByClub(clubId), getMembershipsByClub(clubId), getAttendedCounts()])
+    Promise.all([getEventsByClub(clubId), getMembershipsByClub(clubId), getEventPointsByUser()])
       .then(([events, members, attended]) => {
         if (!ignore) setState({ status: 'success', events, members, attended })
       })
@@ -117,7 +117,7 @@ export default function ManagePage() {
                 <th className="px-3 py-2">Họ và tên</th>
                 <th className="px-3 py-2">Mã sinh viên</th>
                 <th className="px-3 py-2">Gmail</th>
-                <th className="px-3 py-2">ĐRL (/100)</th>
+                <th className="px-3 py-2">ĐRL từ sự kiện</th>
                 <th className="px-3 py-2">Ngày tham gia</th>
               </tr>
             </thead>
@@ -128,7 +128,7 @@ export default function ManagePage() {
                   <td className="px-3 py-2 font-medium text-slate-900">{member.fullName}</td>
                   <td className="px-3 py-2 text-slate-600">{member.studentId}</td>
                   <td className="px-3 py-2 text-slate-600">{member.email}</td>
-                  <td className="px-3 py-2 font-medium text-slate-900">{toPoints(state.attended.get(member.userId) ?? 0)}</td>
+                  <td className="px-3 py-2 font-medium text-slate-900">{state.attended.get(member.userId) ?? 0}</td>
                   <td className="px-3 py-2 text-slate-600">{member.createdAt.slice(0, 10).split('-').reverse().join('/')}</td>
                 </tr>
               ))}

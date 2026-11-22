@@ -7,16 +7,18 @@ import EmptyState from '../components/EmptyState'
 import ErrorMessage from '../components/ErrorMessage'
 import Loading from '../components/Loading'
 import { getClub } from '../data/clubs'
+import { BASE_POINTS, DRL_SOURCE_LABELS, MAX_POINTS, POINTS_PER_EVENT } from '../data/drlCriteria'
 import { useAuth } from '../hooks/useAuth'
 import { useToast } from '../hooks/useToast'
 import { getEventsByIds } from '../services/eventService'
 import { getMembershipsByUser, leaveClub } from '../services/membershipService'
-import { MAX_POINTS, POINTS_PER_EVENT, toPoints } from '../services/pointsService'
 import { cancelRegistration, getRegistrationsByUser } from '../services/registrationService'
 import type { Membership, Registration } from '../types/auth'
+import type { DrlSource } from '../types/drl'
 import type { ClubEvent } from '../types/event'
 import { getErrorMessage } from '../utils/apiError'
 import { formatDate, getToday } from '../utils/date'
+import { countByItem, getDrlItemId, summarizeDrl } from '../utils/drl'
 
 interface Loaded {
   registrations: Registration[]
@@ -67,6 +69,10 @@ export default function MyActivityPage() {
     .sort((a, b) => a.event.date.localeCompare(b.event.date))
   const upcoming = rows.filter((row) => row.event.date >= today)
   const past = rows.filter((row) => row.event.date < today).reverse()
+  const summary = summarizeDrl(countByItem(past.map((row) => row.event)))
+  const allRows = summary.groups.flatMap((result) => result.rows)
+  const pointsBySource = (source: DrlSource): number =>
+    allRows.filter((row) => row.item.source === source).reduce((sum, row) => sum + row.points, 0)
 
   const run = async (key: string, action: () => Promise<void>, message: string) => {
     if (busy) return
@@ -100,7 +106,7 @@ export default function MyActivityPage() {
                 <ClubBadge clubId={event.club} />
                 {!canCancel && (
                   <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
-                    +{POINTS_PER_EVENT} ĐRL
+                    +{POINTS_PER_EVENT} ĐRL · mục {getDrlItemId(event)}
                   </span>
                 )}
               </div>
@@ -126,22 +132,80 @@ export default function MyActivityPage() {
       <h1 className="text-2xl font-bold text-ftu">Hoạt động của tôi</h1>
 
       <section className="mt-4 rounded-xl border border-slate-200 bg-white p-4 shadow-xs" aria-label="Điểm rèn luyện">
-        <p className="text-sm font-medium text-slate-500">Điểm rèn luyện từ sự kiện CLB (ĐRL)</p>
+        <p className="text-sm font-medium text-slate-500">Điểm rèn luyện (theo bảng điểm của Nhà trường)</p>
         <p className="text-3xl font-bold text-ftu">
-          {toPoints(past.length)}
+          {summary.total}
           <span className="text-base font-medium text-slate-500">/{MAX_POINTS}</span>
         </p>
         <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-slate-100">
-          <div className="h-full rounded-full bg-ftu" style={{ width: `${toPoints(past.length)}%` }} />
+          <div className="h-full rounded-full bg-ftu" style={{ width: `${summary.total}%` }} />
         </div>
-        <div className="mt-3 flex flex-wrap gap-2 text-sm">
-          <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-700">
-            Đã tham dự: <strong>{past.length}</strong> sự kiện
-          </span>
-          <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-700">
-            Mỗi sự kiện <strong>+{POINTS_PER_EVENT}</strong> điểm (tối đa {MAX_POINTS})
-          </span>
+        <div className="mt-4 grid gap-2 sm:grid-cols-3">
+          <div className="rounded-lg bg-slate-50 px-3 py-2">
+            <p className="text-xs text-slate-500">Mặc định (ngoan, học tốt)</p>
+            <p className="text-lg font-bold text-slate-800">{pointsBySource('base')}</p>
+          </div>
+          <div className="rounded-lg bg-emerald-50 px-3 py-2">
+            <p className="text-xs text-emerald-700">Từ {past.length} sự kiện CLB (+{POINTS_PER_EVENT}/sự kiện)</p>
+            <p className="text-lg font-bold text-emerald-700">+{pointsBySource('event')}</p>
+          </div>
+          <div className="rounded-lg bg-amber-50 px-3 py-2">
+            <p className="text-xs text-amber-700">Do Trường, Đoàn, Hội chấm</p>
+            <p className="text-lg font-bold text-amber-700">{pointsBySource('manual')}</p>
+          </div>
         </div>
+
+        <div className="mt-4 space-y-3">
+          {summary.groups.map((result) => (
+            <div key={result.group.id} className="overflow-hidden rounded-xl border border-slate-200">
+              <div className="flex items-start justify-between gap-3 bg-red-50 px-3 py-2 font-semibold text-ftu">
+                <span>
+                  {result.group.id}. {result.group.title}
+                </span>
+                <span className="shrink-0 whitespace-nowrap">
+                  {result.points}/{result.group.max}
+                </span>
+              </div>
+              <ul className="divide-y divide-slate-100">
+                {result.rows.map((row) => (
+                  <li key={row.item.id} className="flex items-start gap-3 px-3 py-2.5">
+                    <span className="w-8 shrink-0 pt-0.5 text-sm font-medium text-slate-500">{row.item.id}</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm text-slate-900">{row.item.title}</p>
+                      <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs">
+                        <span
+                          className={`rounded-full px-2 py-0.5 font-medium ${
+                            row.item.source === 'event'
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : row.item.source === 'manual'
+                                ? 'bg-amber-100 text-amber-700'
+                                : 'bg-slate-100 text-slate-600'
+                          }`}
+                        >
+                          {DRL_SOURCE_LABELS[row.item.source]}
+                        </span>
+                        {row.item.source === 'event' && (
+                          <span className="text-slate-500">{row.count} sự kiện</span>
+                        )}
+                      </p>
+                    </div>
+                    <span
+                      className={`shrink-0 whitespace-nowrap text-sm font-semibold ${
+                        row.points === 0 ? 'text-slate-400' : 'text-slate-900'
+                      }`}
+                    >
+                      {row.points}/{row.item.max}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+        <p className="mt-3 text-xs text-slate-500">
+          Mục "Mặc định" tính đủ điểm ({BASE_POINTS} điểm) cho sinh viên chấp hành đầy đủ nội quy và học tập tốt.
+          Mục "Do Trường, Đoàn, Hội chấm" web không tính nên hiển thị 0.
+        </p>
       </section>
 
       <h2 className="mb-3 mt-6 border-l-4 border-ftu bg-slate-50 px-3 py-2 text-base font-semibold uppercase tracking-wide text-ftu">

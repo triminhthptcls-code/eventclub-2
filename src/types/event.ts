@@ -1,3 +1,5 @@
+import type { DrlEventItemId } from './drl'
+
 /** Hình thức tổ chức: trực tiếp hoặc trực tuyến */
 export type EventMode = 'offline' | 'online'
 
@@ -21,6 +23,8 @@ export interface ClubEvent {
   maxSeats: number
   /** Đường dẫn ảnh bìa (tùy chọn), vd. "/images/events/1.jpg" */
   image?: string
+  /** Mục điểm rèn luyện của sự kiện (mỗi lần tham dự +2 điểm); không có thì tính là mục 3.1 */
+  drlItem?: DrlEventItemId
 }
 
 /** Sự kiện kèm số người đã đăng ký (tính từ bảng registrations) */
@@ -44,6 +48,7 @@ export interface EventFormValues {
   maxSeats: string
   /** Đường dẫn ảnh hoặc data URL; chuỗi rỗng nếu không có */
   image: string
+  drlItem: DrlEventItemId
 }
 
 /** Object lỗi của form: mỗi ô có thể có một thông báo lỗi */
