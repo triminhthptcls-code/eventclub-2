@@ -1,0 +1,804 @@
+diff --git a/src/components/ClubBadge.tsx b/src/components/ClubBadge.tsx
+index eb22a83..a07c1d1 100644
+--- a/src/components/ClubBadge.tsx
++++ b/src/components/ClubBadge.tsx
+@@ -1,16 +1,13 @@
+ import { getClub } from '../data/clubs'
+ import ClubIcon from './ClubIcon'
+ 
+-/** Nhãn nhỏ "icon + tên viết tắt CLB" dùng trên card và trang chi tiết */
++/** Logo nhỏ + tên viết tắt CLB */
+ export default function ClubBadge({ clubId }: { clubId: string }) {
+   const club = getClub(clubId)
+   if (!club) return null
+   return (
+-    <span
+-      title={club.name}
+-      className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 py-0.5 pl-0.5 pr-2.5 text-xs font-medium text-slate-700"
+-    >
+-      <ClubIcon clubId={clubId} size={20} />
++    <span title={club.name} className="inline-flex items-center gap-1.5 text-xs text-slate-600">
++      <ClubIcon clubId={clubId} size={18} />
+       {club.short}
+     </span>
+   )
+diff --git a/src/components/ConfirmDialog.tsx b/src/components/ConfirmDialog.tsx
+index 164ff08..fcf4116 100644
+--- a/src/components/ConfirmDialog.tsx
++++ b/src/components/ConfirmDialog.tsx
+@@ -31,7 +31,7 @@ export default function ConfirmDialog({
+ 
+   return (
+     <div
+-      className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/50 p-4"
++      className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/40 p-4"
+       onClick={() => {
+         if (!loading) onCancel()
+       }}
+@@ -40,14 +40,14 @@ export default function ConfirmDialog({
+         role="alertdialog"
+         aria-modal="true"
+         aria-labelledby="confirm-title"
+-        className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl"
++        className="w-full max-w-md rounded border border-slate-200 bg-white p-5 shadow-md"
+         onClick={(event) => event.stopPropagation()}
+       >
+-        <h2 id="confirm-title" className="text-lg font-semibold text-slate-900">
++        <h2 id="confirm-title" className="text-base font-semibold text-slate-900">
+           {title}
+         </h2>
+-        <div className="mt-2 text-sm text-slate-600">{message}</div>
+-        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
++        <div className="mt-2 text-sm text-slate-700">{message}</div>
++        <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+           <Button variant="secondary" onClick={onCancel} disabled={loading} autoFocus>
+             Hủy
+           </Button>
+diff --git a/src/components/EmptyState.tsx b/src/components/EmptyState.tsx
+index aef4af5..f575d78 100644
+--- a/src/components/EmptyState.tsx
++++ b/src/components/EmptyState.tsx
+@@ -4,8 +4,8 @@ interface EmptyStateProps {
+ 
+ export default function EmptyState({ message }: EmptyStateProps) {
+   return (
+-    <div className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-10 text-center text-sm text-slate-500">
++    <p className="rounded border border-slate-200 bg-slate-50 px-3 py-4 text-sm text-slate-500">
+       {message}
+-    </div>
++    </p>
+   )
+ }
+diff --git a/src/components/ErrorMessage.tsx b/src/components/ErrorMessage.tsx
+index 6102b43..ce53b32 100644
+--- a/src/components/ErrorMessage.tsx
++++ b/src/components/ErrorMessage.tsx
+@@ -7,14 +7,11 @@ interface ErrorMessageProps {
+ 
+ export default function ErrorMessage({ message, onRetry }: ErrorMessageProps) {
+   return (
+-    <div
+-      role="alert"
+-      className="rounded-xl border border-rose-200 bg-rose-50 p-5 text-center"
+-    >
+-      <p className="font-semibold text-rose-700">Đã xảy ra lỗi</p>
+-      <p className="mt-1 text-sm text-rose-600">{message}</p>
++    <div role="alert" className="rounded border border-rose-200 bg-rose-50 px-3 py-3 text-sm">
++      <p className="font-medium text-rose-700">Không tải được dữ liệu</p>
++      <p className="mt-0.5 text-rose-700">{message}</p>
+       {onRetry && (
+-        <Button variant="secondary" size="sm" className="mt-3" onClick={onRetry}>
++        <Button variant="secondary" size="sm" className="mt-2" onClick={onRetry}>
+           Thử lại
+         </Button>
+       )}
+diff --git a/src/components/EventCard.tsx b/src/components/EventCard.tsx
+index ab272bf..0b62959 100644
+--- a/src/components/EventCard.tsx
++++ b/src/components/EventCard.tsx
+@@ -1,12 +1,11 @@
+ import { Link } from 'react-router-dom'
++import { getClub } from '../data/clubs'
+ import { useAuth } from '../hooks/useAuth'
+ import type { EventWithSeats } from '../types/event'
+ import { formatDate } from '../utils/date'
+ import { buttonClasses } from '../utils/ui'
+ import Button from './Button'
+-import ClubBadge from './ClubBadge'
+ import EventCover from './EventCover'
+-import { CalendarIcon, ClockIcon, MapPinIcon, UsersIcon } from './Icons'
+ import ModeBadge from './ModeBadge'
+ import SeatBadge from './SeatBadge'
+ 
+@@ -15,65 +14,48 @@ interface EventCardProps {
+   onDelete: (event: EventWithSeats) => void
+ }
+ 
++/** Một dòng trong danh sách sự kiện: ảnh nhỏ bên trái, thông tin bên phải */
+ export default function EventCard({ event, onDelete }: EventCardProps) {
+   const { user } = useAuth()
+   const canManage = user?.role === 'club' && user.clubId === event.club
++  const club = getClub(event.club)
+ 
+   return (
+-    <article className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs transition hover:-translate-y-0.5 hover:shadow-lg">
+-      <Link to={`/su-kien/${event.id}`} aria-label={event.name}>
+-        <EventCover event={event} className="h-44 transition duration-300 group-hover:brightness-105" />
++    <article className="flex gap-3 py-3 sm:gap-4">
++      <Link to={`/su-kien/${event.id}`} tabIndex={-1} aria-hidden="true" className="shrink-0">
++        <EventCover event={event} className="h-16 w-24 sm:h-24 sm:w-40" logoSize={36} />
+       </Link>
+ 
+-      <div className="flex flex-1 flex-col p-4">
+-        <div className="flex items-start justify-between gap-2">
+-          <h3 className="font-semibold leading-snug text-slate-900">
+-            <Link to={`/su-kien/${event.id}`} className="hover:text-ftu">
+-              {event.name}
+-            </Link>
+-          </h3>
+-          <ModeBadge mode={event.mode} />
+-        </div>
+-
+-        <div className="mt-2 flex flex-wrap items-center gap-2">
+-          <ClubBadge clubId={event.club} />
++      <div className="min-w-0 flex-1">
++        <h3 className="text-sm font-semibold leading-snug text-slate-900 sm:text-base">
++          <Link to={`/su-kien/${event.id}`} className="hover:text-ftu hover:underline">
++            {event.name}
++          </Link>
++        </h3>
++        <p className="mt-0.5 text-xs text-slate-600">
++          {club?.short ?? event.club} · <ModeBadge mode={event.mode} />
++        </p>
++        <p className="mt-1 text-sm text-slate-700">
++          {formatDate(event.date)}, {event.startTime}–{event.endTime}
++          <span className="hidden sm:inline">
++            {' · '}
++            {event.mode === 'offline' ? event.location : 'Trực tuyến'}
++          </span>
++        </p>
++        <p className="mt-0.5">
+           <SeatBadge registered={event.registered} maxSeats={event.maxSeats} />
+-        </div>
++        </p>
+ 
+-        <ul className="mt-3 space-y-1.5 text-sm text-slate-600">
+-          <li className="flex items-center gap-2">
+-            <CalendarIcon className="h-4 w-4 shrink-0 text-ftu" />
+-            {formatDate(event.date)}
+-          </li>
+-          <li className="flex items-center gap-2">
+-            <ClockIcon className="h-4 w-4 shrink-0 text-ftu" />
+-            {event.startTime} - {event.endTime}
+-          </li>
+-          <li className="flex items-center gap-2">
+-            <MapPinIcon className="h-4 w-4 shrink-0 text-ftu" />
+-            {event.mode === 'offline' ? event.location : 'Tham gia qua đường dẫn trực tuyến'}
+-          </li>
+-          <li className="flex items-center gap-2">
+-            <UsersIcon className="h-4 w-4 shrink-0 text-ftu" />
+-            {event.registered}/{event.maxSeats} người đã đăng ký
+-          </li>
+-        </ul>
+-
+-        <div className="mt-auto flex flex-wrap gap-2 pt-4">
+-          <Link to={`/su-kien/${event.id}`} className={buttonClasses('secondary', 'sm')}>
+-            {canManage ? 'Xem' : 'Xem / Đăng ký'}
+-          </Link>
+-          {canManage && (
+-            <>
+-              <Link to={`/su-kien/${event.id}/sua`} className={buttonClasses('secondary', 'sm')}>
+-                Sửa
+-              </Link>
+-              <Button variant="danger" size="sm" onClick={() => onDelete(event)}>
+-                Xóa
+-              </Button>
+-            </>
+-          )}
+-        </div>
++        {canManage && (
++          <div className="mt-2 flex flex-wrap gap-2">
++            <Link to={`/su-kien/${event.id}/sua`} className={buttonClasses('secondary', 'sm')}>
++              Sửa
++            </Link>
++            <Button variant="danger" size="sm" onClick={() => onDelete(event)}>
++              Xóa
++            </Button>
++          </div>
++        )}
+       </div>
+     </article>
+   )
+diff --git a/src/components/EventCover.tsx b/src/components/EventCover.tsx
+index ccd04f1..6b649dd 100644
+--- a/src/components/EventCover.tsx
++++ b/src/components/EventCover.tsx
+@@ -2,18 +2,8 @@ import { useState } from 'react'
+ import type { ClubEvent } from '../types/event'
+ import ClubIcon from './ClubIcon'
+ import { DEFAULT_EVENT_IMAGES } from '../utils/eventImages'
+-import { MapPinIcon, VideoIcon } from './Icons'
+ import { assetUrl } from '../utils/assetUrl'
+ 
+-/** Gradient dự phòng khi chưa có ảnh, chọn theo id để các thẻ không giống hệt nhau */
+-const GRADIENTS = [
+-  'from-red-900 to-red-600',
+-  'from-red-800 to-rose-500',
+-  'from-rose-900 to-red-500',
+-  'from-stone-800 to-red-700',
+-  'from-red-950 to-orange-600',
+-]
+-
+ /**
+  * Đường dẫn ảnh của sự kiện:
+  * - ưu tiên trường `image` trong db.json (vd. "/images/events/workshop.jpg")
+@@ -39,26 +29,24 @@ function getEventImageCandidates(event: ClubEvent): string[] {
+ 
+ interface EventCoverProps {
+   event: ClubEvent
++  /** Kích thước khung ảnh, vd. "h-40 w-full" */
+   className?: string
++  /** Cạnh logo CLB hiện khi không có ảnh (px) */
++  logoSize?: number
+ }
+ 
+-export default function EventCover({ event, className = 'h-40' }: EventCoverProps) {
++export default function EventCover({ event, className = 'h-40 w-full', logoSize = 64 }: EventCoverProps) {
+   const candidates = getEventImageCandidates(event)
+   const [tried, setTried] = useState(0)
+   const failed = tried >= candidates.length
+-  const gradient = GRADIENTS[(Number(event.id) || 0) % GRADIENTS.length]
+-  const Icon = event.mode === 'online' ? VideoIcon : MapPinIcon
+ 
+   return (
+-    <div className={`relative w-full overflow-hidden bg-gradient-to-br ${gradient} ${className}`}>
+-      {failed && (
++    <div className={`relative overflow-hidden rounded border border-slate-200 bg-slate-100 ${className}`}>
++      {failed ? (
+         <div className="absolute inset-0 flex items-center justify-center">
+-          <div className="rounded-full bg-white/90 p-1 shadow-lg">
+-            <ClubIcon clubId={event.club} size={96} />
+-          </div>
++          <ClubIcon clubId={event.club} size={logoSize} />
+         </div>
+-      )}
+-      {!failed && (
++      ) : (
+         <img
+           src={assetUrl(candidates[tried])}
+           alt={event.name}
+@@ -67,9 +55,6 @@ export default function EventCover({ event, className = 'h-40' }: EventCoverProp
+           className="absolute inset-0 h-full w-full object-cover"
+         />
+       )}
+-      <div className="absolute bottom-3 left-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-red-800 shadow">
+-        <Icon className="h-5 w-5" />
+-      </div>
+     </div>
+   )
+ }
+diff --git a/src/components/EventSection.tsx b/src/components/EventSection.tsx
+index 8f9b243..8384a43 100644
+--- a/src/components/EventSection.tsx
++++ b/src/components/EventSection.tsx
+@@ -3,6 +3,7 @@ import { getEvents } from '../services/eventService'
+ import type { ClubEvent, EventStatus, EventWithSeats } from '../types/event'
+ import { getErrorMessage } from '../utils/apiError'
+ import { PER_PAGE } from '../utils/constants'
++import { SECTION_TITLE } from '../utils/ui'
+ import EmptyState from './EmptyState'
+ import ErrorMessage from './ErrorMessage'
+ import EventCard from './EventCard'
+@@ -74,13 +75,11 @@ export default function EventSection({
+       : 'Chưa có sự kiện nào đã diễn ra.'
+ 
+   return (
+-    <section className="mt-8">
+-      <h2 className="mb-4 border-l-4 border-ftu bg-slate-50 px-3 py-2 text-base font-semibold uppercase tracking-wide text-ftu">
++    <section className="mt-6">
++      <h2 className={SECTION_TITLE}>
+         {title}
+         {state.status === 'success' && (
+-          <span className="ml-2 text-sm font-normal text-slate-500">
+-            ({state.total})
+-          </span>
++          <span className="ml-1.5 text-sm font-normal text-slate-500">({state.total})</span>
+         )}
+       </h2>
+ 
+@@ -98,7 +97,7 @@ export default function EventSection({
+           <EmptyState message={emptyMessage} />
+         ) : (
+           <>
+-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
++            <div className="-mt-3 divide-y divide-slate-200 border-b border-slate-200">
+               {state.items.map((event) => (
+                 <EventCard key={event.id} event={event} onDelete={onDelete} />
+               ))}
+diff --git a/src/components/Loading.tsx b/src/components/Loading.tsx
+index 48b9de1..7b6ff41 100644
+--- a/src/components/Loading.tsx
++++ b/src/components/Loading.tsx
+@@ -2,17 +2,14 @@ interface LoadingProps {
+   text?: string
+ }
+ 
+-export default function Loading({ text = 'Đang tải dữ liệu...' }: LoadingProps) {
++export default function Loading({ text = 'Đang tải...' }: LoadingProps) {
+   return (
+-    <div
+-      role="status"
+-      className="flex items-center justify-center gap-3 py-12 text-slate-500"
+-    >
++    <div role="status" className="flex items-center gap-2 py-6 text-sm text-slate-500">
+       <span
+-        className="h-6 w-6 animate-spin rounded-full border-4 border-red-200 border-t-ftu"
++        className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-ftu"
+         aria-hidden="true"
+       />
+-      <span className="text-sm">{text}</span>
++      {text}
+     </div>
+   )
+ }
+diff --git a/src/components/ModeBadge.tsx b/src/components/ModeBadge.tsx
+index d1d1228..0be34d1 100644
+--- a/src/components/ModeBadge.tsx
++++ b/src/components/ModeBadge.tsx
+@@ -5,16 +5,7 @@ interface ModeBadgeProps {
+   mode: EventMode
+ }
+ 
++/** Hình thức tổ chức, hiển thị dạng chữ thường */
+ export default function ModeBadge({ mode }: ModeBadgeProps) {
+-  return (
+-    <span
+-      className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${
+-        mode === 'online'
+-          ? 'bg-sky-100 text-sky-700'
+-          : 'bg-amber-100 text-amber-700'
+-      }`}
+-    >
+-      {MODE_LABELS[mode]}
+-    </span>
+-  )
++  return <span className="text-xs text-slate-600">{MODE_LABELS[mode]}</span>
+ }
+diff --git a/src/components/NotFoundMessage.tsx b/src/components/NotFoundMessage.tsx
+index c41a1d8..e9673c1 100644
+--- a/src/components/NotFoundMessage.tsx
++++ b/src/components/NotFoundMessage.tsx
+@@ -1,5 +1,5 @@
+ import { Link } from 'react-router-dom'
+-import { buttonClasses } from '../utils/ui'
++import { PAGE_TITLE, buttonClasses } from '../utils/ui'
+ 
+ interface NotFoundMessageProps {
+   title: string
+@@ -8,10 +8,10 @@ interface NotFoundMessageProps {
+ 
+ export default function NotFoundMessage({ title, message }: NotFoundMessageProps) {
+   return (
+-    <div className="rounded-xl border border-slate-200 bg-white px-4 py-12 text-center shadow-xs">
+-      <h1 className="text-2xl font-bold text-slate-900">{title}</h1>
+-      <p className="mx-auto mt-2 max-w-md text-slate-600">{message}</p>
+-      <Link to="/su-kien" className={`${buttonClasses('primary')} mt-6`}>
++    <div className="py-4">
++      <h1 className={PAGE_TITLE}>{title}</h1>
++      <p className="mt-1 text-sm text-slate-600">{message}</p>
++      <Link to="/su-kien" className={`${buttonClasses('secondary')} mt-4`}>
+         Về danh sách sự kiện
+       </Link>
+     </div>
+diff --git a/src/components/Pagination.tsx b/src/components/Pagination.tsx
+index 792f44f..539255a 100644
+--- a/src/components/Pagination.tsx
++++ b/src/components/Pagination.tsx
+@@ -8,20 +8,12 @@ interface PaginationProps {
+ 
+ export default function Pagination({ page, pages, onChange }: PaginationProps) {
+   return (
+-    <nav
+-      className="mt-4 flex items-center justify-center gap-3"
+-      aria-label="Phân trang"
+-    >
+-      <Button
+-        variant="secondary"
+-        size="sm"
+-        disabled={page <= 1}
+-        onClick={() => onChange(page - 1)}
+-      >
+-        ← Trước
++    <nav className="mt-3 flex items-center gap-3" aria-label="Phân trang">
++      <Button variant="secondary" size="sm" disabled={page <= 1} onClick={() => onChange(page - 1)}>
++        Trang trước
+       </Button>
+-      <span className="text-sm text-slate-600">
+-        Trang {page} / {pages}
++      <span className="text-xs text-slate-600">
++        {page}/{pages}
+       </span>
+       <Button
+         variant="secondary"
+@@ -29,7 +21,7 @@ export default function Pagination({ page, pages, onChange }: PaginationProps) {
+         disabled={page >= pages}
+         onClick={() => onChange(page + 1)}
+       >
+-        Sau →
++        Trang sau
+       </Button>
+     </nav>
+   )
+diff --git a/src/components/RadioGroup.tsx b/src/components/RadioGroup.tsx
+index 401a943..657b164 100644
+--- a/src/components/RadioGroup.tsx
++++ b/src/components/RadioGroup.tsx
+@@ -12,7 +12,7 @@ interface RadioGroupProps<T extends string> {
+   disabled?: boolean
+ }
+ 
+-/** Nhóm nút chọn dạng segmented (dùng cho "Hình thức") */
++/** Nhóm nút chọn radio (dùng cho "Hình thức", "Mục điểm rèn luyện") */
+ export default function RadioGroup<T extends string>({
+   legend,
+   name,
+@@ -23,20 +23,18 @@ export default function RadioGroup<T extends string>({
+ }: RadioGroupProps<T>) {
+   return (
+     <fieldset>
+-      <legend className="mb-1 block text-sm font-medium text-slate-700">
++      <legend className="mb-1 block text-sm font-medium text-slate-800">
+         {legend}
+       </legend>
+-      <div className="flex flex-wrap gap-2">
++      <div className="flex flex-wrap gap-x-5 gap-y-1.5">
+         {options.map((option) => {
+           const checked = option.value === value
+           return (
+             <label
+               key={option.value}
+-              className={`cursor-pointer rounded-lg border px-4 py-2 text-sm font-medium transition focus-within:ring-2 focus-within:ring-red-300 ${
+-                checked
+-                  ? 'border-ftu bg-ftu text-white'
+-                  : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'
+-              } ${disabled ? 'cursor-not-allowed opacity-60' : ''}`}
++              className={`inline-flex items-center gap-2 text-sm text-slate-800 ${
++                disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
++              }`}
+             >
+               <input
+                 type="radio"
+@@ -45,7 +43,7 @@ export default function RadioGroup<T extends string>({
+                 checked={checked}
+                 disabled={disabled}
+                 onChange={() => onChange(option.value)}
+-                className="sr-only"
++                className="h-4 w-4 accent-ftu"
+               />
+               {option.label}
+             </label>
+diff --git a/src/components/SeatBadge.tsx b/src/components/SeatBadge.tsx
+index c0df2dc..38af661 100644
+--- a/src/components/SeatBadge.tsx
++++ b/src/components/SeatBadge.tsx
+@@ -3,17 +3,11 @@ interface SeatBadgeProps {
+   maxSeats: number
+ }
+ 
+-/** Nhãn số chỗ còn lại: xanh = còn nhiều, vàng = sắp hết, xám = hết chỗ */
++/** Số chỗ còn lại; hết chỗ thì in màu nhấn để dễ thấy */
+ export default function SeatBadge({ registered, maxSeats }: SeatBadgeProps) {
+   const left = Math.max(0, maxSeats - registered)
+-  const style =
+-    left === 0
+-      ? 'bg-slate-200 text-slate-600'
+-      : left <= Math.max(3, Math.ceil(maxSeats * 0.15))
+-        ? 'bg-amber-100 text-amber-700'
+-        : 'bg-emerald-100 text-emerald-700'
+   return (
+-    <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${style}`}>
++    <span className={`text-xs ${left === 0 ? 'font-medium text-ftu' : 'text-slate-600'}`}>
+       {left === 0 ? 'Hết chỗ' : `Còn ${left}/${maxSeats} chỗ`}
+     </span>
+   )
+diff --git a/src/components/TextField.tsx b/src/components/TextField.tsx
+index d6680df..f5a329c 100644
+--- a/src/components/TextField.tsx
++++ b/src/components/TextField.tsx
+@@ -1,3 +1,5 @@
++import { inputClasses } from '../utils/ui'
++
+ interface TextFieldProps {
+   label: string
+   name: string
+@@ -42,9 +44,9 @@ export default function TextField({
+ 
+   return (
+     <div>
+-      <label htmlFor={id} className="mb-1 block text-sm font-medium text-slate-700">
++      <label htmlFor={id} className="mb-1 block text-sm font-medium text-slate-800">
+         {label}
+-        {required && <span className="ml-0.5 text-rose-600">*</span>}
++        {required && <span className="ml-0.5 text-ftu">*</span>}
+       </label>
+       <input
+         id={id}
+@@ -61,11 +63,7 @@ export default function TextField({
+         onBlur={onBlur}
+         aria-invalid={error ? true : undefined}
+         aria-describedby={describedBy || undefined}
+-        className={`w-full rounded-lg border bg-white px-3 py-2 text-sm text-slate-900 shadow-xs outline-none transition placeholder:text-slate-400 focus:ring-2 disabled:cursor-not-allowed disabled:bg-slate-100 ${
+-          error
+-            ? 'border-rose-500 bg-rose-50 focus:border-rose-500 focus:ring-rose-200'
+-            : 'border-slate-300 focus:border-ftu focus:ring-red-200'
+-        }`}
++        className={inputClasses(Boolean(error))}
+       />
+       {hint && !error && (
+         <p id={hintId} className="mt-1 text-xs text-slate-500">
+@@ -73,7 +71,7 @@ export default function TextField({
+         </p>
+       )}
+       {error && (
+-        <p id={errorId} role="alert" className="mt-1 text-sm text-rose-600">
++        <p id={errorId} role="alert" className="mt-1 text-xs text-rose-700">
+           {error}
+         </p>
+       )}
+diff --git a/src/components/toast/ToastProvider.tsx b/src/components/toast/ToastProvider.tsx
+index 6d0f0a3..065cddf 100644
+--- a/src/components/toast/ToastProvider.tsx
++++ b/src/components/toast/ToastProvider.tsx
+@@ -46,8 +46,8 @@ export default function ToastProvider({ children }: ToastProviderProps) {
+           <div
+             key={toast.id}
+             role="status"
+-            className={`pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-lg px-4 py-3 text-sm text-white shadow-lg ${
+-              toast.type === 'success' ? 'bg-emerald-600' : 'bg-rose-600'
++            className={`pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded px-3 py-2 text-sm text-white shadow-md ${
++              toast.type === 'success' ? 'bg-slate-800' : 'bg-ftu'
+             }`}
+           >
+             <span className="flex-1">{toast.message}</span>
+diff --git a/src/index.css b/src/index.css
+index 0479f74..c34ba96 100644
+--- a/src/index.css
++++ b/src/index.css
+@@ -9,5 +9,5 @@
+ }
+ 
+ body {
+-  @apply bg-slate-100 text-slate-800 antialiased;
++  @apply bg-slate-50 text-slate-800 antialiased;
+ }
+diff --git a/src/layouts/Footer.tsx b/src/layouts/Footer.tsx
+index 7be1391..8637173 100644
+--- a/src/layouts/Footer.tsx
++++ b/src/layouts/Footer.tsx
+@@ -1,11 +1,9 @@
+ export default function Footer() {
+   return (
+-    <footer className="mt-2 border-t-2 border-ftu bg-white">
+-      <div className="mx-auto max-w-7xl px-4 py-5 text-xs leading-6 text-ftu">
+-        <p className="font-bold uppercase">Trường Đại học Ngoại thương</p>
+-        <p>Địa chỉ: 91 Chùa Láng, Phường Láng, Hà Nội</p>
+-        <p>Email: ftu@ftu.edu.vn</p>
+-        <p>Website: www.ftu.edu.vn</p>
++    <footer className="mt-4 border-t border-slate-200 bg-white">
++      <div className="mx-auto max-w-7xl px-4 py-4 text-xs leading-5 text-slate-600">
++        <p className="font-semibold text-slate-800">Trường Đại học Ngoại thương</p>
++        <p>91 Chùa Láng, Phường Láng, Hà Nội · ftu@ftu.edu.vn · www.ftu.edu.vn</p>
+       </div>
+     </footer>
+   )
+diff --git a/src/layouts/Header.tsx b/src/layouts/Header.tsx
+index 165fb50..8600bfe 100644
+--- a/src/layouts/Header.tsx
++++ b/src/layouts/Header.tsx
+@@ -4,10 +4,7 @@ import { useAuth } from '../hooks/useAuth'
+ import { getNavItems } from './navItems'
+ import { assetUrl } from '../utils/assetUrl'
+ 
+-const BASE_PILL =
+-  'inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold transition'
+-const ACTIVE_PILL = 'bg-white text-ftu'
+-const IDLE_PILL = 'bg-black/20 text-white hover:bg-black/30'
++const TOP_LINK = 'text-sm text-white/90 hover:text-white hover:underline'
+ 
+ export default function Header() {
+   const { pathname } = useLocation()
+@@ -18,39 +15,26 @@ export default function Header() {
+     user?.role === 'club' ? (getClub(user.clubId ?? '')?.short ?? user.fullName) : user?.fullName
+ 
+   return (
+-    <header className="sticky top-0 z-30 bg-ftu shadow-md">
+-      <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 py-2.5">
++    <header className="sticky top-0 z-30 bg-ftu">
++      <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2">
+         <Link to="/su-kien" className="flex items-center gap-2 text-white">
+           <img
+             src={assetUrl('/images/ftu-logo.png')}
+             alt="Logo Đại học Ngoại thương"
+-            className="h-10 w-10 rounded-full bg-white"
++            className="h-9 w-9 rounded-full bg-white"
+           />
+           <span className="leading-tight">
+-            <span className="block text-base font-bold">FTU Club Events</span>
+-            <span className="block text-[11px] font-medium text-red-100">
+-              Đại học Ngoại thương
+-            </span>
++            <span className="block text-base font-semibold">FTU Club Events</span>
++            <span className="block text-xs text-white/80">Đại học Ngoại thương</span>
+           </span>
+         </Link>
+-        <nav className="flex flex-wrap gap-2 sm:ml-4" aria-label="Menu chính">
+-          {getNavItems(user).map((item) => (
+-            <Link
+-              key={item.to}
+-              to={item.to}
+-              className={`${BASE_PILL} ${item.match(pathname) ? ACTIVE_PILL : IDLE_PILL}`}
+-            >
+-              {item.label}
+-            </Link>
+-          ))}
+-        </nav>
+ 
+-        <div className="ml-auto flex items-center gap-2 text-xs text-white">
++        <div className="ml-auto flex items-center gap-4">
+           {user ? (
+             <>
+-              <span className="text-right leading-tight">
+-                <span className="block font-semibold">{displayName}</span>
+-                <span className="block text-[11px] text-red-100">
++              <span className="text-right text-xs leading-tight text-white">
++                <span className="block text-sm font-medium">{displayName}</span>
++                <span className="block text-white/80">
+                   {user.role === 'club' ? 'Tài khoản CLB' : 'Sinh viên'}
+                 </span>
+               </span>
+@@ -60,23 +44,43 @@ export default function Header() {
+                   logout()
+                   navigate('/su-kien')
+                 }}
+-                className={`${BASE_PILL} ${IDLE_PILL}`}
++                className={TOP_LINK}
+               >
+                 Đăng xuất
+               </button>
+             </>
+           ) : (
+             <>
+-              <Link to="/dang-nhap" className={`${BASE_PILL} ${pathname === '/dang-nhap' ? ACTIVE_PILL : IDLE_PILL}`}>
++              <Link to="/dang-nhap" className={TOP_LINK}>
+                 Đăng nhập
+               </Link>
+-              <Link to="/dang-ky" className={`${BASE_PILL} ${pathname === '/dang-ky' ? ACTIVE_PILL : IDLE_PILL}`}>
++              <Link to="/dang-ky" className={TOP_LINK}>
+                 Đăng ký
+               </Link>
+             </>
+           )}
+         </div>
+       </div>
++
++      {/* Trên điện thoại không có menu bên trái nên menu nằm ngay dưới thanh tiêu đề */}
++      <nav
++        className="flex gap-4 overflow-x-auto border-t border-white/20 px-4 py-2 md:hidden"
++        aria-label="Menu chính"
++      >
++        {getNavItems(user).map((item) => (
++          <Link
++            key={item.to}
++            to={item.to}
++            className={`shrink-0 whitespace-nowrap text-sm ${
++              item.match(pathname)
++                ? 'font-medium text-white underline underline-offset-4'
++                : 'text-white/85 hover:text-white'
++            }`}
++          >
++            {item.label}
++          </Link>
++        ))}
++      </nav>
+     </header>
+   )
+ }
+diff --git a/src/layouts/MainLayout.tsx b/src/layouts/MainLayout.tsx
+index c2ee55f..df4c838 100644
+--- a/src/layouts/MainLayout.tsx
++++ b/src/layouts/MainLayout.tsx
+@@ -7,9 +7,9 @@ export default function MainLayout() {
+   return (
+     <div className="flex min-h-screen flex-col">
+       <Header />
+-      <div className="mx-auto flex w-full max-w-7xl flex-1 gap-4 px-4 py-4">
++      <div className="mx-auto flex w-full max-w-7xl flex-1 gap-4 sm:px-4 sm:py-4">
+         <Sidebar />
+-        <main className="min-w-0 flex-1 rounded-xl border border-ftu/30 bg-white p-5 shadow-md">
++        <main className="min-w-0 flex-1 border-slate-200 bg-white px-4 py-5 sm:rounded sm:border sm:px-6">
+           <Outlet />
+         </main>
+       </div>
+diff --git a/src/layouts/Sidebar.tsx b/src/layouts/Sidebar.tsx
+index 9801f79..2aa9c9b 100644
+--- a/src/layouts/Sidebar.tsx
++++ b/src/layouts/Sidebar.tsx
+@@ -2,9 +2,9 @@ import { Link, useLocation } from 'react-router-dom'
+ import { useAuth } from '../hooks/useAuth'
+ import { getNavItems } from './navItems'
+ 
+-const ITEM = 'block border-b border-slate-200 px-3 py-3.5 text-[15px] transition'
+-const ACTIVE = 'border-b-2 border-b-ftu bg-ftu-soft font-semibold text-ftu'
+-const IDLE = 'text-slate-800 hover:bg-slate-50 hover:text-ftu'
++const ITEM = 'block border-l-2 px-3 py-2 text-sm transition-colors'
++const ACTIVE = 'border-ftu bg-ftu-soft/60 font-medium text-ftu'
++const IDLE = 'border-transparent text-slate-700 hover:bg-slate-50 hover:text-slate-900'
+ 
+ /** Menu bên trái giống cổng thông tin sinh viên */
+ export default function Sidebar() {
+@@ -12,7 +12,7 @@ export default function Sidebar() {
+   const { user } = useAuth()
+ 
+   return (
+-    <aside className="hidden w-60 shrink-0 self-start rounded-xl bg-white p-2 shadow-sm md:block">
++    <aside className="hidden w-56 shrink-0 self-start rounded border border-slate-200 bg-white py-1 md:block">
+       <nav aria-label="Menu bên">
+         {getNavItems(user).map((item) => (
+           <Link
+diff --git a/src/utils/ui.ts b/src/utils/ui.ts
+index 3ed2d94..87f11d1 100644
+--- a/src/utils/ui.ts
++++ b/src/utils/ui.ts
+@@ -2,18 +2,17 @@ export type ButtonVariant = 'primary' | 'secondary' | 'danger'
+ export type ButtonSize = 'md' | 'sm'
+ 
+ const BASE =
+-  'inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60'
++  'inline-flex items-center justify-center gap-2 rounded font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ftu focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-60'
+ 
+ const VARIANTS: Record<ButtonVariant, string> = {
+-  primary: 'bg-ftu text-white hover:bg-ftu-dark focus-visible:ring-ftu',
+-  secondary:
+-    'border border-ftu bg-white text-ftu hover:bg-ftu-soft focus-visible:ring-ftu',
+-  danger: 'bg-slate-700 text-white hover:bg-slate-800 focus-visible:ring-slate-500',
++  primary: 'border border-ftu bg-ftu text-white hover:bg-ftu-dark',
++  secondary: 'border border-slate-300 bg-white text-slate-800 hover:border-slate-400 hover:bg-slate-50',
++  danger: 'border border-slate-300 bg-white text-ftu hover:border-ftu hover:bg-ftu-soft',
+ }
+ 
+ const SIZES: Record<ButtonSize, string> = {
+-  md: 'px-4 py-2 text-sm',
+-  sm: 'px-3 py-1.5 text-xs',
++  md: 'px-3.5 py-1.5 text-sm',
++  sm: 'px-2.5 py-1 text-xs',
+ }
+ 
+ /** Class Tailwind dùng chung cho nút và cho thẻ Link trông như nút */
+@@ -23,3 +22,27 @@ export function buttonClasses(
+ ): string {
+   return `${BASE} ${VARIANTS[variant]} ${SIZES[size]}`
+ }
++
++/** Ô nhập, ô chọn: viền mảnh, khi lỗi thì viền đỏ */
++export function inputClasses(hasError = false): string {
++  return `w-full rounded border bg-white px-3 py-1.5 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:ring-1 disabled:cursor-not-allowed disabled:bg-slate-100 ${
++    hasError
++      ? 'border-rose-600 focus:border-rose-600 focus:ring-rose-600'
++      : 'border-slate-300 focus:border-ftu focus:ring-ftu'
++  }`
++}
++
++/** Thang chữ dùng chung: tiêu đề trang (xl), tiêu đề mục (base), nội dung (sm), chú thích (xs) */
++export const PAGE_TITLE = 'text-xl font-semibold text-slate-900'
++export const SECTION_TITLE =
++  'mb-3 border-b border-slate-200 pb-2 text-base font-semibold text-slate-900'
++export const LINK = 'text-ftu hover:underline'
++
++/** Bảng: kẻ dòng mảnh, đầu bảng nền xám nhạt */
++export const TABLE_WRAP = 'overflow-x-auto rounded border border-slate-200'
++export const TABLE = 'w-full text-left text-sm'
++export const THEAD = 'border-b border-slate-200 bg-slate-50 text-xs text-slate-600'
++export const TH = 'px-3 py-2 font-medium'
++export const TD = 'px-3 py-2'
++
++export const ALERT_ERROR = 'rounded border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700'
